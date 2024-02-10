@@ -1,0 +1,8 @@
+bleak==0.20.2
+PyQt6
+PyQt6-Qt6
+PyQt6-sip
+pyqt6-tools
+qasync
+icecream
+Adafruit-Blinka
