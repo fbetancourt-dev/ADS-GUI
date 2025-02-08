@@ -1,7 +1,10 @@
 from PyQt6 import QtCore, QtWidgets, QtGui
 
 import asyncio
+
 from device_settings_class import DeviceSettings
+
+#from spectrometer_controller import SpectrometerController
 
 class SpectrumView(QtWidgets.QWidget):
     def __init__(self, ble_manager, parent=None):
@@ -20,6 +23,12 @@ class SpectrumView(QtWidgets.QWidget):
 
         self.settings = DeviceSettings()
         print(self.settings.device_data["SourceSettings/T2_C2"])
+
+        # Initialize the SpectrometerController
+        #self.spectrometer_controller = SpectrometerController(self.ble_manager)
+        #self.spectrometer_controller.operation_complete.connect(
+        #    self.handle_operation_complete
+        #)
 
     def setupUi(self):
         print("[DEBUG] Initializing SpectrumView UI")
@@ -163,12 +172,19 @@ class SpectrumView(QtWidgets.QWidget):
             self.update_samples_label()
 
             # Data to send
-            data_to_send = bytearray([27, 0, 0])
-            print(f"Sending: {data_to_send}")
+            # data_to_send = bytearray([27, 0, 0])
+            # print(f"Sending: {data_to_send}")
 
             print("[DEBUG] Starting background measurement...")
-            data = bytearray(b'\x1b\x00\x00')
-            asyncio.create_task(self.ble_manager.send_data(bytearray(b"\x1b\x00\x00")))
+            command = bytearray([0x1B, 0x00, 0x00])  # Example command
+            self.ble_manager.queue_command(command)
+
+            #print("[DEBUG] Starting background measurement...")
+            #gain_setting = self.settings.device_data[
+            #    "MeasurementParameters/OpticalGainSettings"
+            #]
+            #print(gain_setting)
+            #self.spectrometer_controllers.set_optical_settings(gain_setting)
 
         else:
             print("[DEBUG] BLE device not connected.")
@@ -206,3 +222,6 @@ class SpectrumView(QtWidgets.QWidget):
 
     def openSpectrumView(self):
         print("[DEBUG] Already in SpectrumView")
+        
+    def handle_operation_complete(self, operation, data):
+        print(f"Operation {operation} completed with data: {data}")
