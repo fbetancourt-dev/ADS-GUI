@@ -1,4 +1,10 @@
-from PyQt6 import QtCore, QtWidgets, QtGui
+from PyQt6 import QtWidgets
+import qasync
+import sys
+from bluetooth_manager import BluetoothManager
+from views.home_view import HomeView
+
+#from device_settings_class import DeviceSettings
 
 class MainApp(QtWidgets.QMainWindow):
     def __init__(self):
@@ -6,21 +12,24 @@ class MainApp(QtWidgets.QMainWindow):
         self.setWindowTitle("NeoSpectra Micro")
         self.resize(800, 600)
 
-        # Initialize QSettings
-        self._settings = QtCore.QSettings(
-            "settings.ini", QtCore.QSettings.Format.IniFormat
-        )
+        # Initialize Bluetooth Manager
+        self.ble_manager = BluetoothManager()
 
-        # Load Home View
-        from views.home_view import HomeView  # Lazy import
-
-        self.home_view = HomeView(self)
+        # Load Home View with Bluetooth Manager
+        self.home_view = HomeView(self.ble_manager, self)
         self.setCentralWidget(self.home_view)
 
-if __name__ == "__main__":
-    import sys
+        #self.settings = DeviceSettings()
+        #print(self.settings.device_data["SourceSettings/T2_C2"])
 
-    app = QtWidgets.QApplication(sys.argv)
+
+if __name__ == "__main__":
+    app = qasync.QApplication(sys.argv)
+    loop = qasync.QEventLoop(app)
+    qasync.asyncio.set_event_loop(loop)
+
     main_app = MainApp()
     main_app.show()
-    sys.exit(app.exec())
+
+    with loop:
+        loop.run_forever()
