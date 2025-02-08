@@ -61,13 +61,19 @@ class SettingsView(QtWidgets.QWidget):
 
         for i, (param, desc) in enumerate(sourceParams.items()):
             label = QtWidgets.QLabel(f"{param}: {desc}")
-            widget = (
-                QtWidgets.QSpinBox() if param != "Resolution" else QtWidgets.QComboBox()
-            )
-            if param == "Resolution":
-                widget.addItems(["16 nm @ 1500 nm", "8 nm @ 1500 nm"])
+            if param == "LampSelect":
+                widget = QtWidgets.QComboBox()
+                widget.addItems(["0", "1"])
+            elif param == "LampCount":
+                widget = QtWidgets.QComboBox()
+                widget.addItems(["0", "1", "2"])
+            elif param == "Resolution":
+                widget = QtWidgets.QComboBox()
+                widget.addItems(["16 nm @ 1500 nm", "32 nm @ 1500 nm"])
             else:
+                widget = QtWidgets.QSpinBox()
                 widget.setRange(0, 100)
+
             self.widgets[f"SourceSettings/{param}"] = widget
             sourceLayout.addWidget(label, i, 0)
             sourceLayout.addWidget(widget, i, 1)
@@ -78,8 +84,8 @@ class SettingsView(QtWidgets.QWidget):
         measurementParamsGroup = QtWidgets.QGroupBox("MEASUREMENT PARAMETERS")
         measurementLayout = QtWidgets.QGridLayout()
         measurementParams = {
-            "RunMode": ["Continuous", "Single"],
-            "OpticalGainSettings": ["Default", "High Gain", "Low Gain"],
+            "RunMode": ["Single", "Continuous"],
+            "OpticalGainSettings": ["Default", "Calculated", "External"],
         }
 
         for i, (param, options) in enumerate(measurementParams.items()):
@@ -96,12 +102,20 @@ class SettingsView(QtWidgets.QWidget):
         displayDataGroup = QtWidgets.QGroupBox("DISPLAY DATA")
         displayLayout = QtWidgets.QGridLayout()
         displayParams = {
-            "EnableLinearInterpolation": ["Enabled", "Disabled"],
-            "NumberOfDataPoints": ["257 pts", "512 pts", "1024 pts"],
-            "EnableFFTSettings": ["Enabled", "Disabled"],
-            "FFTSettings": ["Basic", "Advanced"],
-            "ApodizationFunction": ["Boxcar", "Hamming", "Hanning", "Blackman"],
-            "NumberOfFFTPoints": ["8 K", "4 K", "2 K"],
+            "EnableLinearInterpolation": ["Disabled", "Enabled"],
+            "NumberOfDataPoints": [
+                " ",
+                "65 pts",
+                "129 pts",
+                "257 pts",
+                "513 pts",
+                "1024 pts",
+                "2048 pts",
+                "4096 pts"
+            ],
+            "EnableFFTSettings": ["Disabled", "Enabled"],
+            "ApodizationFunction": ["Boxcar", "Gaussian", "Happ-Genzel", "Lorenz"],
+            "NumberOfFFTPoints": [" ", "8 K", "16 K", "32 K"],
         }
 
         for i, (param, options) in enumerate(displayParams.items()):

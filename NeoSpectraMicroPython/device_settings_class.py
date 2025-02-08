@@ -22,7 +22,6 @@ class DeviceSettings:
                 "DisplayData/EnableLinearInterpolation",
                 "DisplayData/NumberOfDataPoints",
                 "DisplayData/EnableFFTSettings",
-                "DisplayData/FFTSettings",
                 "DisplayData/ApodizationFunction",
                 "DisplayData/NumberOfFFTPoints",
             ]
