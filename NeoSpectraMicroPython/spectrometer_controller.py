@@ -9,12 +9,15 @@ class SpectrometerController(QObject):
     def __init__(self, ble_manager):
         super().__init__()
         self.ble_manager = ble_manager
+
         if self.ble_manager:
             print("[DEBUG] BLE Manager linked successfully.")
+
             self.ble_manager.data_received.connect(self._handle_data_received)
             self.ble_manager.data_transfer_complete.connect(
                 self._handle_transfer_complete
             )
+
             self.current_command = None
         else:
             print("[ERROR] BLE Manager is None!")
@@ -22,11 +25,14 @@ class SpectrometerController(QObject):
     def set_optical_settings(self, gain_setting):
         command = bytearray([0x1B])  # Command ID for optical settings
         command.extend(gain_setting.to_bytes(2, "little"))
-        self._send_command("set_optical_settings", command)
+        # self._send_command("set_optical_settings", command)
+        # Schedule the coroutine properly
+        asyncio.create_task(self._send_command("set_optical_settings", command))
 
     def set_source_settings(
         self, lamp_select, lamp_count, delta_t, t1, t2_max, t2_c1, t2_c2
     ):
+        '''
         command = bytearray([0x16])  # Command ID for source settings
         command.extend(lamp_select.to_bytes(1, "little"))
         command.extend(lamp_count.to_bytes(1, "little"))
@@ -35,7 +41,53 @@ class SpectrometerController(QObject):
         command.extend(t2_max.to_bytes(2, "little"))
         command.extend(t2_c1.to_bytes(2, "little"))
         command.extend(t2_c2.to_bytes(2, "little"))
-        self._send_command("set_source_settings", command)
+        '''
+
+        '''
+        command = bytearray()
+        command.append(0x16)  # Operation ID for setSourceSettings
+        
+        # Add the parameters according to the BLE packet structure
+        command.append(lamp_select)
+        command.append(lamp_count)
+        
+        # Reserved bytes (2 bytes)
+        command.extend((0x00, 0x00))
+        
+        command.append(t1)
+        command.append(delta_t)
+        
+        # Reserved bytes (2 bytes)
+        command.extend((0x00, 0x00))
+        
+        command.append(t2_c1)
+        command.append(t2_c2)
+        command.append(t2_max)
+        
+        '''
+        value1 = lamp_select * 256 + lamp_count
+        value2 = delta_t * 256 + t1
+        value3 = t2_max * 65536 + t2_c2 * 256 + t2_c1
+
+        value1Bytes = value1.to_bytes(4, "little")
+        value2Bytes = value2.to_bytes(4, "little")
+        value3Bytes = value3.to_bytes(4, "little")
+
+        command = bytearray()
+        command.append(0x16)  # Operation ID for setSourceSettings
+        command.append(value1Bytes[0])
+        command.append(value1Bytes[1])
+        command.append(value1Bytes[2])
+        command.append(value1Bytes[3])
+        command.append(value2Bytes[0])
+        command.append(value2Bytes[1])
+        command.append(value2Bytes[2])
+        command.append(value2Bytes[3])
+        command.append(value3Bytes[0])
+        command.append(value3Bytes[1])
+        command.append(value3Bytes[2])
+        command.append(value3Bytes[3])
+        asyncio.create_task(self._send_command("set_source_settings", command))
 
     def run_background(
         self,

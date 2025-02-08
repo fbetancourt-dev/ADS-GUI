@@ -4,8 +4,6 @@ import asyncio
 
 from device_settings_class import DeviceSettings
 
-#from spectrometer_controller import SpectrometerController
-
 class SpectrumView(QtWidgets.QWidget):
     def __init__(self, ble_manager, parent=None):
         super(SpectrumView, self).__init__(parent)
@@ -25,10 +23,16 @@ class SpectrumView(QtWidgets.QWidget):
         print(self.settings.device_data["SourceSettings/T2_C2"])
 
         # Initialize the SpectrometerController
-        #self.spectrometer_controller = SpectrometerController(self.ble_manager)
-        #self.spectrometer_controller.operation_complete.connect(
-        #    self.handle_operation_complete
-        #)
+        try:
+            from spectrometer_controller import SpectrometerController
+
+            self.spectrometer_controller = SpectrometerController(self.ble_manager)
+            self.spectrometer_controller.operation_complete.connect(
+                self.handle_operation_complete
+            )
+            print("[DEBUG] SpectrometerController initialized successfully")
+        except Exception as e:
+            print(f"[ERROR] Failed to initialize SpectrometerController: {e}")
 
     def setupUi(self):
         print("[DEBUG] Initializing SpectrumView UI")
@@ -171,20 +175,22 @@ class SpectrumView(QtWidgets.QWidget):
             self.scanned_samples += 1
             self.update_samples_label()
 
-            # Data to send
-            # data_to_send = bytearray([27, 0, 0])
-            # print(f"Sending: {data_to_send}")
+            # print("[DEBUG] Starting background measurement...")
+            # command = bytearray([0x1B, 0x00, 0x00])  # Example command
+            # self.ble_manager.queue_command(command)
 
             print("[DEBUG] Starting background measurement...")
-            command = bytearray([0x1B, 0x00, 0x00])  # Example command
-            self.ble_manager.queue_command(command)
+            gain_setting = self.settings.device_data["MeasurementParameters/OpticalGainSettings"]
+            self.spectrometer_controller.set_optical_settings(gain_setting)
 
-            #print("[DEBUG] Starting background measurement...")
-            #gain_setting = self.settings.device_data[
-            #    "MeasurementParameters/OpticalGainSettings"
-            #]
-            #print(gain_setting)
-            #self.spectrometer_controllers.set_optical_settings(gain_setting)
+            lamp_select = self.settings.device_data["SourceSettings/LampSelect"]
+            lamp_count = self.settings.device_data["SourceSettings/LampCount"]
+            delta_t = self.settings.device_data["SourceSettings/DeltaT"]
+            t1 = self.settings.device_data["SourceSettings/T1"]
+            t2_max = self.settings.device_data["SourceSettings/T2_MAX"]
+            t2_c2 = self.settings.device_data["SourceSettings/T2_C2"]
+            t2_c1 = self.settings.device_data["SourceSettings/T2_C1"]
+            self.spectrometer_controller.set_source_settings(lamp_select, lamp_count, delta_t, t1, t2_max, t2_c1, t2_c2)
 
         else:
             print("[DEBUG] BLE device not connected.")
@@ -222,6 +228,6 @@ class SpectrumView(QtWidgets.QWidget):
 
     def openSpectrumView(self):
         print("[DEBUG] Already in SpectrumView")
-        
+
     def handle_operation_complete(self, operation, data):
         print(f"Operation {operation} completed with data: {data}")
