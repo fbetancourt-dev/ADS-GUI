@@ -17,27 +17,6 @@ class MainApp(QtWidgets.QMainWindow):
         self.home_view = HomeView(self)
         self.setCentralWidget(self.home_view)
 
-        # Connect navigation buttons
-        self.home_view.pbHomeSettings.clicked.connect(self.openSettingsView)
-        self.home_view.tbMainHome.clicked.connect(self.openHomeView)
-        self.home_view.tbMainSpectrum.clicked.connect(self.openSpectrumView)
-
-    def openHomeView(self):
-        from views.home_view import HomeView  # Lazy import
-
-        self.setCentralWidget(HomeView(self))
-
-    def openSettingsView(self):
-        from views.settings_view import SettingsView  # Lazy import
-
-        self.setCentralWidget(SettingsView(self))
-
-    def openSpectrumView(self):
-        from views.spectrum_view import SpectrumView  # Lazy import
-
-        self.setCentralWidget(SpectrumView(self))
-
-
 if __name__ == "__main__":
     import sys
 
