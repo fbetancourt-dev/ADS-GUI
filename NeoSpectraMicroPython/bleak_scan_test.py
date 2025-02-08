@@ -140,6 +140,7 @@ class BLEScannerApp(QWidget):
 
     def log_message(self, message):
         self.log_list.addItem(message)
+        self.log_list.scrollToBottom()  # Auto-scroll to the latest item
 
     def connect_device(self):
         selected = self.device_list.currentItem()
