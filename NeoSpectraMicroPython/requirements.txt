@@ -1,8 +1,9 @@
-bleak==0.20.2
+bleak
 PyQt6
 PyQt6-Qt6
 PyQt6-sip
-pyqt6-tools
 qasync
 icecream
 Adafruit-Blinka
+numpy
+matplotlib
