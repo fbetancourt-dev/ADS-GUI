@@ -1,5 +1,6 @@
 from PyQt6 import QtCore, QtWidgets, QtGui
 
+import asyncio
 from device_settings_class import DeviceSettings
 
 class SpectrumView(QtWidgets.QWidget):
@@ -160,6 +161,15 @@ class SpectrumView(QtWidgets.QWidget):
             print("[DEBUG] Starting background measurement...")
             self.scanned_samples += 1
             self.update_samples_label()
+
+            # Data to send
+            data_to_send = bytearray([27, 0, 0])
+            print(f"Sending: {data_to_send}")
+
+            print("[DEBUG] Starting background measurement...")
+            data = bytearray(b'\x1b\x00\x00')
+            asyncio.create_task(self.ble_manager.send_data(bytearray(b"\x1b\x00\x00")))
+
         else:
             print("[DEBUG] BLE device not connected.")
 
