@@ -10,6 +10,8 @@ class BluetoothManager(QObject):
     data_received = pyqtSignal(bytes)  # Signal to notify when data is received
     data_transfer_complete = pyqtSignal()  # Signal when all data has been received
 
+    lock = asyncio.Lock()
+
     UART_SERVICE_UUID = "6E400001-B5A3-F393-E0A9-E50E24DCCA9E"
     UART_RX_CHAR_UUID = "6E400002-B5A3-F393-E0A9-E50E24DCCA9E"
     UART_TX_CHAR_UUID = "6E400003-B5A3-F393-E0A9-E50E24DCCA9E"
@@ -24,6 +26,7 @@ class BluetoothManager(QObject):
         self.received_data = bytearray()
         self.command_queue = deque()
         self.processing_command = False
+        self.lock = asyncio.Lock()  # Initialize lock
 
     async def connect_device(self, address):
         try:
@@ -72,15 +75,19 @@ class BluetoothManager(QObject):
     def queue_command(self, data: bytearray):
         self.command_queue.append(data)
         if not self.processing_command:
-            asyncio.create_task(self._process_queue())
+            asyncio.create_task(self._process_queue())  # Start processing if not already running
 
     async def _process_queue(self):
-        self.processing_command = True
-        while self.command_queue:
-            data = self.command_queue.popleft()
-            await self.send_data(data)
-            await self._wait_for_data_transfer()
-        self.processing_command = False
+        async with self.lock:  # 🔒 Lock is acquired here
+            self.processing_command = True
+            print("[DEBUG] Lock acquired")
+
+            while self.command_queue:
+                data = self.command_queue.popleft()
+                await self.send_data(data)
+                await self._wait_for_data_transfer()
+            self.processing_command = False
+            print("[DEBUG] Lock released")  # 🔓 Automatically released here
 
     async def send_data(self, data: bytearray):
         if self.ble_client and self.ble_client.is_connected:

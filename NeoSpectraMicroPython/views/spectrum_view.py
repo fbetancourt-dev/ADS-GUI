@@ -1,5 +1,6 @@
 from PyQt6 import QtCore, QtWidgets, QtGui
 
+from qasync import asyncSlot  # Import asyncSlot
 import asyncio
 
 from device_settings_class import DeviceSettings
@@ -20,7 +21,7 @@ class SpectrumView(QtWidgets.QWidget):
         print(f"[DEBUG] BLE Status Updated: {status}")
 
         self.settings = DeviceSettings()
-        print(self.settings.device_data["SourceSettings/T2_C2"])
+        # print(self.settings.device_data["SourceSettings/T2_C2"])
 
         # Initialize the SpectrometerController
         try:
@@ -169,11 +170,12 @@ class SpectrumView(QtWidgets.QWidget):
         self.connectionStatusLabel.setText(f"BLE Status: {status}")
         print(f"[DEBUG] BLE Status Updated: {status}")
 
-    def start_bg(self):
+    @asyncSlot()  # Decorator to handle async functions in PyQt
+    async def start_bg(self):
         if self.ble_manager.ble_client and self.ble_manager.ble_client.is_connected:
             print("[DEBUG] Starting background measurement...")
             self.scanned_samples += 1
-            self.update_samples_label()
+            #self.update_samples_label()
 
             # print("[DEBUG] Starting background measurement...")
             # command = bytearray([0x1B, 0x00, 0x00])  # Example command
@@ -183,6 +185,10 @@ class SpectrumView(QtWidgets.QWidget):
             gain_setting = self.settings.device_data["MeasurementParameters/OpticalGainSettings"]
             self.spectrometer_controller.set_optical_settings(gain_setting)
 
+            # ⏳ Add delay between commands
+            print("[DEBUG] Wait 5 sec.")
+            await asyncio.sleep(5)  # 2-second delay
+
             lamp_select = self.settings.device_data["SourceSettings/LampSelect"]
             lamp_count = self.settings.device_data["SourceSettings/LampCount"]
             delta_t = self.settings.device_data["SourceSettings/DeltaT"]
@@ -191,6 +197,23 @@ class SpectrumView(QtWidgets.QWidget):
             t2_c2 = self.settings.device_data["SourceSettings/T2_C2"]
             t2_c1 = self.settings.device_data["SourceSettings/T2_C1"]
             self.spectrometer_controller.set_source_settings(lamp_select, lamp_count, delta_t, t1, t2_max, t2_c1, t2_c2)
+
+            # ⏳ Add delay between commands
+            print("[DEBUG] Wait 5 sec.")
+            await asyncio.sleep(5)  # 5-second delay
+
+            scan_time = 10
+            interpolation_enabled = self.settings.device_data["DisplayData/EnableLinearInterpolation"]
+            data_points = self.settings.device_data["DisplayData/NumberOfDataPoints"]
+            optical_settings = self.settings.device_data["MeasurementParameters/OpticalGainSettings"]
+            apodization = self.settings.device_data["DisplayData/ApodizationFunction"]
+            zero_padding = self.settings.device_data["DisplayData/NumberOfFFTPoints"]
+            run_mode = self.settings.device_data["MeasurementParameters/RunMode"]
+            self.spectrometer_controller.run_background(scan_time, interpolation_enabled, data_points, optical_settings, apodization, zero_padding, run_mode)
+
+            # ⏳ Add delay between commands
+            print("[DEBUG] Wait 1 sec.")
+            await asyncio.sleep(1)  # 1-second delay
 
         else:
             print("[DEBUG] BLE device not connected.")
