@@ -177,6 +177,7 @@ class SpectrometerController(QObject):
         zero_padding,
         run_mode,
     ):
+        '''
         command = bytearray([0x05])  # Command ID for absorbance scan
         command.extend(scan_time.to_bytes(3, "little"))
         command.append(interpolation_enabled)
@@ -185,7 +186,54 @@ class SpectrometerController(QObject):
         command.append(apodization)
         command.append(zero_padding)
         command.append(run_mode)
-        self._send_command("run_absorbance", command)
+        '''
+        command = bytearray([0x05])  # Command ID for background scan
+        st = int(scan_time) * 1000
+        scan_time_byte = st.to_bytes(3, "little")
+        command.append(scan_time_byte[0])
+        command.append(scan_time_byte[1])
+        command.append(scan_time_byte[2])
+
+        # get common WL value
+        if interpolation_enabled == 1:
+            if data_points == 0:
+                command.append(5)
+            else:
+                command.append(data_points)
+        else:
+            command.append(0)
+
+        # get optical settings value
+
+        # if optical_settings_option != None:
+        if optical_settings == 0:
+            command.append(0)
+        else:
+            command.append(2)
+
+        # get apodization window value
+        command.append(apodization)
+
+        zero_padding = apodization = int(
+            self.settings.device_data["DisplayData/NumberOfFFTPoints"]
+        )
+        resolution = int(self.settings.device_data["SourceSettings/Resolution"])
+
+        if resolution == 1:
+            resolution = 0
+        else:
+            resolution = 1
+
+        if zero_padding == 0:
+            zero_padding = 1 + 128 * resolution
+            command.append(zero_padding)
+        else:
+            zero_padding = zero_padding + 128 * resolution
+            command.append(zero_padding)
+        # get run mode
+        run_mode = int(self.settings.device_data["MeasurementParameters/RunMode"])
+        command.append(run_mode * 5)
+        asyncio.create_task(self._send_command("run_absorbance", command))
 
     async def _send_command(self, command_name, command):
         if self.ble_manager.is_connected:

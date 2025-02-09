@@ -175,7 +175,7 @@ class SpectrumView(QtWidgets.QWidget):
         if self.ble_manager.ble_client and self.ble_manager.ble_client.is_connected:
             print("[DEBUG] Starting background measurement...")
             self.scanned_samples += 1
-            #self.update_samples_label()
+            self.update_samples_label()
 
             # print("[DEBUG] Starting background measurement...")
             # command = bytearray([0x1B, 0x00, 0x00])  # Example command
@@ -202,7 +202,7 @@ class SpectrumView(QtWidgets.QWidget):
             print("[DEBUG] Wait 5 sec.")
             await asyncio.sleep(5)  # 5-second delay
 
-            scan_time = 10
+            scan_time = 1
             interpolation_enabled = self.settings.device_data["DisplayData/EnableLinearInterpolation"]
             data_points = self.settings.device_data["DisplayData/NumberOfDataPoints"]
             optical_settings = self.settings.device_data["MeasurementParameters/OpticalGainSettings"]
@@ -218,11 +218,25 @@ class SpectrumView(QtWidgets.QWidget):
         else:
             print("[DEBUG] BLE device not connected.")
 
-    def start_scan(self):
+    @asyncSlot()  # Decorator to handle async functions in PyQt
+    async def start_scan(self):
         if self.ble_manager.ble_client and self.ble_manager.ble_client.is_connected:
             print("[DEBUG] Starting scan measurement...")
             self.scanned_samples += 1
             self.update_samples_label()
+
+            scan_time = 1
+            interpolation_enabled = self.settings.device_data["DisplayData/EnableLinearInterpolation"]
+            data_points = self.settings.device_data["DisplayData/NumberOfDataPoints"]
+            optical_settings = self.settings.device_data["MeasurementParameters/OpticalGainSettings"]
+            apodization = self.settings.device_data["DisplayData/ApodizationFunction"]
+            zero_padding = self.settings.device_data["DisplayData/NumberOfFFTPoints"]
+            run_mode = self.settings.device_data["MeasurementParameters/RunMode"]
+            self.spectrometer_controller.run_absorbance(scan_time, interpolation_enabled, data_points, optical_settings, apodization, zero_padding, run_mode)
+
+            # ⏳ Add delay between commands
+            print("[DEBUG] Wait 1 sec.")
+            await asyncio.sleep(1)  # 1-second delay
         else:
             print("[DEBUG] BLE device not connected.")
 
